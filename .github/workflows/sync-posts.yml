@@ -2,7 +2,7 @@ name: Sync Notion Posts
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Runs once a day at midnight UTC
+    - cron: '0 */8 * * *'  # Runs every 8 hours
   workflow_dispatch:  # Allows manual triggering
 
 permissions:
@@ -19,7 +19,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
+
+      - name: Install ImageMagick (HEIC decode support)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
 
       - name: Install dependencies
         run: npm install
@@ -41,4 +46,4 @@ jobs:
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref }} 
+          branch: ${{ github.ref }}
