@@ -5,7 +5,6 @@ import * as path from "path";
 import * as dotenv from "dotenv";
 import axios from "axios";
 import sharp from "sharp";
-import { execFileSync } from "child_process";
 import { v4 as uuidv4 } from 'uuid';
 
 dotenv.config();
@@ -264,7 +263,7 @@ async function downloadImageInner(imageUrl: string, altText: string): Promise<st
  * HEIC → JPEG 转码。
  * 优先 sharp(unlimited 模式可绕过 libheif 的 iloc 安全限制);
  * 若 sharp 解码失败(部分 iPhone HEIC 多 item 文件会报 bad seek),
- * 回退到系统 ImageMagick convert(GitHub Actions workflow 中已安装)。
+ * 回退到 libheif-js(WASM 纯 JS 实现,不依赖系统库,GitHub Actions 也可用)。
  */
 async function convertHeicToJpeg(buffer: Buffer): Promise<Buffer> {
     // 尝试 1: sharp + unlimited
@@ -277,29 +276,29 @@ async function convertHeicToJpeg(buffer: Buffer): Promise<Buffer> {
         console.log(`[+]   via sharp: ${(out.length / 1024).toFixed(0)}KB`);
         return out;
     } catch (err) {
-        console.log(`[!]   sharp failed, falling back to ImageMagick: ${(err as Error).message}`);
+        console.log(`[!]   sharp failed, trying libheif-js (WASM): ${(err as Error).message.split('\n')[0]}`);
     }
 
-    // 尝试 2: ImageMagick convert
-    const tmpIn = path.join(process.cwd(), 'public/images/posts', `tmp-in-${uuidv4()}.heic`);
-    const tmpOut = path.join(process.cwd(), 'public/images/posts', `tmp-out-${uuidv4()}.jpg`);
+    // 尝试 2: libheif-js (WASM, 纯 JS, 无系统依赖)
     try {
-        fs.writeFileSync(tmpIn, buffer);
-        execFileSync('convert', [
-            tmpIn,
-            '-auto-orient',
-            '-resize', `${MAX_IMAGE_WIDTH}x${MAX_IMAGE_WIDTH}>`,
-            '-quality', '82',
-            '-strip',
-            tmpOut
-        ], { stdio: 'pipe' });
-        const out = fs.readFileSync(tmpOut);
-        console.log(`[+]   via ImageMagick: ${(out.length / 1024).toFixed(0)}KB`);
+        const heicConvert = (await import('heic-convert')).default;
+        const rawJpeg = await heicConvert({
+            buffer,
+            format: 'JPEG',
+            quality: 0.85,
+        });
+        const out = await sharp(Buffer.from(rawJpeg))
+            .rotate()
+            .resize({ width: MAX_IMAGE_WIDTH, withoutEnlargement: true })
+            .jpeg({ quality: 82, mozjpeg: true })
+            .toBuffer();
+        console.log(`[+]   via libheif-js: ${(out.length / 1024).toFixed(0)}KB`);
         return out;
-    } finally {
-        if (fs.existsSync(tmpIn)) fs.unlinkSync(tmpIn);
-        if (fs.existsSync(tmpOut)) fs.unlinkSync(tmpOut);
+    } catch (err) {
+        console.log(`[!]   libheif-js failed: ${(err as Error).message.split('\n')[0]}`);
     }
+
+    throw new Error('HEIC 转码失败: sharp 与 libheif-js 均无法解码');
 }
 
 async function parseMarkdownBlock(block: any): Promise<any> {
