@@ -129,18 +129,79 @@ function parsePostTags(rawTags: Array<Object>): Array<string> {
  * 3. 所有图片宽度限制在 MAX_IMAGE_WIDTH 内(不放大)
  * 4. 应用 EXIF 方向(rotate),手机竖拍图不会歪
  */
+// 下载超时(毫秒)
+const DOWNLOAD_TIMEOUT = 60000;
+// 下载重试次数(Notion S3 偶发限流/瞬时失败)
+const DOWNLOAD_RETRY = 3;
+// 全局下载并发上限(56 张图同时并发极可能触发 Notion S3 限流)
+const MAX_CONCURRENT_DOWNLOADS = 4;
+
+// 简单的并发限制器(信号量)
+let activeDownloads = 0;
+const downloadQueue: Array<() => void> = [];
+
+async function withDownloadLimit<T>(task: () => Promise<T>): Promise<T> {
+    if (activeDownloads < MAX_CONCURRENT_DOWNLOADS) {
+        activeDownloads++;
+        try {
+            return await task();
+        } finally {
+            activeDownloads--;
+            downloadQueue.shift()?.();
+        }
+    }
+    return new Promise<T>((resolve, reject) => {
+        downloadQueue.push(() => {
+            activeDownloads++;
+            task().then(resolve, reject).finally(() => {
+                activeDownloads--;
+                downloadQueue.shift()?.();
+            });
+        });
+    });
+}
+
 async function downloadImage(imageUrl: string, altText: string): Promise<string> {
+    return withDownloadLimit(() => downloadImageInner(imageUrl, altText));
+}
+
+async function downloadImageInner(imageUrl: string, altText: string): Promise<string> {
     try {
         const imageDir = path.join(process.cwd(), 'public/images/posts');
         if (!fs.existsSync(imageDir)) {
             fs.mkdirSync(imageDir, { recursive: true });
         }
 
-        const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-        const contentType = (response.headers['content-type'] as string) || '';
-        const extFromHeader = (contentType.split(';')[0].split('/')[1] || 'jpg').toLowerCase();
+        // 下载(带重试,打印 HTTP 状态码便于排查)
+        let buffer: Buffer | undefined;
+        let contentType = '';
+        let lastError: unknown;
+        for (let attempt = 1; attempt <= DOWNLOAD_RETRY; attempt++) {
+            try {
+                const response = await axios.get(imageUrl, {
+                    responseType: 'arraybuffer',
+                    timeout: DOWNLOAD_TIMEOUT,
+                    maxRedirects: 5,
+                });
+                buffer = Buffer.from(response.data);
+                contentType = (response.headers['content-type'] as string) || '';
+                break;
+            } catch (err: any) {
+                lastError = err;
+                const httpStatus = err?.response?.status ? ` HTTP ${err.response.status}` : '';
+                console.error(`[!] Download attempt ${attempt}/${DOWNLOAD_RETRY} failed (${altText || 'image'}): ${err?.message}${httpStatus}`);
+                if (attempt < DOWNLOAD_RETRY) {
+                    await new Promise(r => setTimeout(r, 3000 * attempt));
+                }
+            }
+        }
+        if (!buffer) {
+            console.error(`[!] Failed to download image after ${DOWNLOAD_RETRY} attempts: ${imageUrl}`);
+            console.error(lastError);
+            return imageUrl;
+        }
 
-        let buffer = Buffer.from(response.data);
+        const extFromHeader = (contentType.split(';')[0].split('/')[1] || 'jpg').toLowerCase();
 
         // 检测真实格式(不信任 content-type,避免 HEIC 被标成 jpeg)
         const boxType = buffer.subarray(4, 12).toString('ascii');
