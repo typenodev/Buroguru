@@ -46,6 +46,10 @@ async function syncPosts() {
         let response = await notionClient.databases.query({database_id : NOTION_DATABASE_ID})
         let posts = response.results;
 
+        let syncedCount = 0;
+        let skippedUnpublished = 0;
+        let skippedFetch = 0;
+
         // 保护:数据库返回 0 篇文章,说明 API/权限异常。此时 content/posts 已被清空,
         // 若继续提交会把空内容推上去,导致 Netlify 构建 ENOENT。必须中止并报错。
         if (posts.length === 0) {
@@ -56,46 +60,66 @@ async function syncPosts() {
         for (const rawPostData of posts) {
             let postData = JSON.parse(JSON.stringify(rawPostData));
 
-            if (!postData.properties.Published.checkbox) continue;
+            const title = postData.properties.Title?.title?.[0]?.plain_text || '(无标题)';
 
-            // 检查是否有自定义的 id 栏位
+            if (!postData.properties.Published?.checkbox) {
+                skippedUnpublished++;
+                continue;
+            }
+
+            // 优先使用自定义的 id 栏位做 slug;若缺失则用标题生成兜底 slug
+            // (旧逻辑缺 id 直接整篇跳过,导致新文章一个都不同步)
             const customId = postData.properties.id?.rich_text?.[0]?.plain_text ||
                            postData.properties.id?.title?.[0]?.plain_text ||
                            postData.properties.ID?.rich_text?.[0]?.plain_text ||
-                           postData.properties.ID?.title?.[0]?.plain_text;
-
-            if (!customId) {
-                console.error(`[!] Missing custom id field for post: ${postData.properties.Title.title[0].plain_text}`);
-                continue;
-            }
+                           postData.properties.ID?.title?.[0]?.plain_text ||
+                           title;
 
             // 清理档案名称，移除不允许的字符
             const safeFileName = customId.replace(/[^a-zA-Z0-9\-_]/g, '-').toLowerCase();
 
-            let markdownBlocks = await notionToMarkdown.pageToMarkdown(postData.id);
+            let markdownBlocks;
+            try {
+                markdownBlocks = await notionToMarkdown.pageToMarkdown(postData.id);
+            } catch (e) {
+                console.error(`[!] 拉取文章块失败,跳过: ${title} - ${String(e)}`);
+                skippedFetch++;
+                continue;
+            }
             const processedBlocks = await Promise.all(markdownBlocks.map(block => parseMarkdownBlock(block)));
             let markdownContent = notionToMarkdown.toMarkdownString(processedBlocks).parent;
 
-            const thumbnailUrl = postData.properties.Thumbnail.files[0].file.url;
-            const localThumbnailUrl = await downloadImage(thumbnailUrl, postData.properties.Title.title[0].plain_text);
+            const thumbnailUrl = postData.properties.Thumbnail?.files?.[0]?.file?.url || null;
+            const localThumbnailUrl = thumbnailUrl
+                ? await downloadImage(thumbnailUrl, title)
+                : '';
 
             let markdownFrontmatter = parseMarkdownFrontmatter(
-                postData.properties.Title.title[0].plain_text,
-                postData.properties.Description.rich_text[0].plain_text,
+                title,
+                postData.properties.Description?.rich_text?.[0]?.plain_text || '',
                 localThumbnailUrl,
-                postData.properties.Date.date.start,
-                parsePostTags(postData.properties.Tags.multi_select)
+                postData.properties.Date?.date?.start || '',
+                parsePostTags(postData.properties.Tags?.multi_select || [])
             );
 
             const filePath = path.join(postsDir, `${safeFileName}.md`);
             fs.writeFileSync(filePath, markdownFrontmatter + markdownContent);
 
+            syncedCount++;
             console.log(`[+] Created post: ${filePath}`);
+        }
+
+        console.log(`[+] 同步统计: 成功写入 ${syncedCount} 篇 | 未发布跳过 ${skippedUnpublished} 篇 | 拉取失败跳过 ${skippedFetch} 篇`);
+        if (syncedCount === 0) {
+            console.error("[!] 0 篇文章被写入,疑似 Notion 字段配置或权限问题。中止同步,防止清空线上内容。");
+            process.exit(1);
         }
     }
     catch(error){
         console.log("[!] Fetch from notion database failed.")
         console.error(error);
+        // 同步失败必须非零退出,否则 workflow 会把已清空的 content/posts 提交上去污染分支
+        process.exit(1);
     }
 }
 
