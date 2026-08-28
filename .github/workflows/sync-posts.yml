@@ -44,6 +44,13 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
 
+          # 防呆:content/posts 必须至少有一篇 md,否则说明同步失败(脚本已清空目录),
+          # 中止提交,避免把空内容推上分支导致 Netlify 构建 ENOENT。
+          if ! ls content/posts/*.md >/dev/null 2>&1; then
+            echo "⚠️ content/posts 为空,同步疑似失败,中止提交"
+            exit 1
+          fi
+
           # 暂存全部改动(脚本生成的 content/images + npm install 可能改的 package-lock.json)
           git add -A
 
