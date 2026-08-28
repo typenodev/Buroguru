@@ -46,6 +46,13 @@ async function syncPosts() {
         let response = await notionClient.databases.query({database_id : NOTION_DATABASE_ID})
         let posts = response.results;
 
+        // 保护:数据库返回 0 篇文章,说明 API/权限异常。此时 content/posts 已被清空,
+        // 若继续提交会把空内容推上去,导致 Netlify 构建 ENOENT。必须中止并报错。
+        if (posts.length === 0) {
+            console.error("[!] Notion 数据库返回 0 篇文章,疑似 API/权限问题。中止同步,防止清空线上内容。");
+            process.exit(1);
+        }
+
         for (const rawPostData of posts) {
             let postData = JSON.parse(JSON.stringify(rawPostData));
 
@@ -342,4 +349,3 @@ async function parseMarkdownBlock(block: any): Promise<any> {
 }
 
 syncPosts()
-
