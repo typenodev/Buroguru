@@ -45,7 +45,6 @@ jobs:
           git config --local user.name "github-actions[bot]"
 
           # 暂存全部改动(脚本生成的 content/images + npm install 可能改的 package-lock.json)
-          # 必须 add -A,否则残留未暂存改动会让 pull --rebase 报 "unstaged changes"
           git add -A
 
           # 无变化则跳过,避免空提交
@@ -56,8 +55,14 @@ jobs:
           # 用 GITHUB_TOKEN 认证远程
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 
-          # 先拉取远程最新,rebase 本地提交(解决 push rejected / fetch first)
-          git pull --rebase origin "${GITHUB_REF_NAME}"
+          # 拉取远程最新
+          git fetch origin "${GITHUB_REF_NAME}"
+
+          # 合并远程改动:
+          # 内容文件(content/posts、public/images/posts)每次 sync 都全量重建,uuid 文件名全变,
+          # rebase/普通 merge 必然冲突。用 -X ours:冲突时一律以本地(新生成内容)为准;
+          # 代码文件(脚本/workflow/配置)若只有远程改动,则正常合并保留。
+          git merge -X ours --no-edit "origin/${GITHUB_REF_NAME}"
 
           # 推送
           git push origin "HEAD:${GITHUB_REF_NAME}"
