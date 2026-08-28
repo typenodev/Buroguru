@@ -5,7 +5,7 @@ import * as path from "path";
 import * as dotenv from "dotenv";
 import axios from "axios";
 import sharp from "sharp";
-import { v4 as uuidv4 } from 'uuid';
+import { createHash } from 'crypto';
 
 dotenv.config();
 
@@ -74,6 +74,8 @@ async function syncPosts() {
             const safeFileName = customId.replace(/[^a-zA-Z0-9\-_]/g, '-').toLowerCase();
 
             currentSlugs.add(safeFileName);
+
+            const lastEdited = (postData as any).last_edited_time as string;
 
             // 增量:若已存在且 last_edited_time 未变,跳过(保留旧 md 与图片,不重新下载转码)
             const mdPath = path.join(postsDir, `${safeFileName}.md`);
@@ -308,7 +310,7 @@ async function downloadImageInner(imageUrl: string, altText: string): Promise<st
             ext = 'jpg';
         }
 
-        const filename = `${uuidv4()}.${ext}`;
+        const filename = `${imgHash}.${ext}`;
         const imagePath = path.join(imageDir, filename);
         fs.writeFileSync(imagePath, outBuffer);
 
