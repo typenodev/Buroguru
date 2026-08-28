@@ -8,6 +8,11 @@ on:
 permissions:
   contents: write
 
+# 防止定时任务与手动触发并发运行(并发是 push 冲突的主因)
+concurrency:
+  group: sync-notion-posts
+  cancel-in-progress: true
+
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -15,6 +20,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 拉完整历史,pull --rebase 需要
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -30,15 +37,24 @@ jobs:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
 
-      - name: Commit changes
+      - name: Commit and push changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add content/posts public/images/posts
-          git diff --quiet && git diff --staged --quiet || git commit -m "chore: sync posts from notion"
 
-      - name: Push changes
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref }}
+          # 无变化则跳过,避免空提交
+          git diff --quiet && git diff --staged --quiet && echo "无内容变化,跳过提交" && exit 0
+
+          git commit -m "chore: sync posts from notion"
+
+          # 用 GITHUB_TOKEN 认证远程
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+          # 先拉取远程最新,rebase 本地提交(解决 push rejected / fetch first)
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+
+          # 推送
+          git push origin "HEAD:${GITHUB_REF_NAME}"
