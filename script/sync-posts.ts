@@ -27,18 +27,12 @@ const MAX_IMAGE_WIDTH = 1600;
 const PNG_TO_JPEG_THRESHOLD = 2 * 1024 * 1024; // 2MB
 
 async function syncPosts() {
-    console.log("[+] Cleaning content and images folders.")
+    console.log("[+] Preparing content and images folders (incremental mode).")
     const postsDir = path.join(process.cwd(), 'content/posts');
-    if (fs.existsSync(postsDir)) {
-        fs.rmSync(postsDir, { recursive: true, force: true });
-    }
-    fs.mkdirSync(postsDir, { recursive: true });
+    fs.mkdirSync(postsDir, { recursive: true });  // 增量:不清空,保留旧文用于比对
 
     const imagesDir = path.join(process.cwd(), 'public/images/posts');
-    if (fs.existsSync(imagesDir)) {
-        fs.rmSync(imagesDir, { recursive: true, force: true });
-    }
-    fs.mkdirSync(imagesDir, { recursive: true });
+    fs.mkdirSync(imagesDir, { recursive: true });  // 增量:不清空,相同图片按 hash 复用
 
     console.log("[+] Fetching from notion database.")
 
@@ -49,6 +43,7 @@ async function syncPosts() {
         let syncedCount = 0;
         let skippedUnpublished = 0;
         let skippedFetch = 0;
+        let currentSlugs = new Set<string>();
 
         // 保护:数据库返回 0 篇文章,说明 API/权限异常。此时 content/posts 已被清空,
         // 若继续提交会把空内容推上去,导致 Netlify 构建 ENOENT。必须中止并报错。
@@ -78,6 +73,20 @@ async function syncPosts() {
             // 清理档案名称，移除不允许的字符
             const safeFileName = customId.replace(/[^a-zA-Z0-9\-_]/g, '-').toLowerCase();
 
+            currentSlugs.add(safeFileName);
+
+            // 增量:若已存在且 last_edited_time 未变,跳过(保留旧 md 与图片,不重新下载转码)
+            const mdPath = path.join(postsDir, `${safeFileName}.md`);
+            if (fs.existsSync(mdPath)) {
+                const prev = fs.readFileSync(mdPath, "utf8");
+                const m = prev.match(/notionLastEdited:\s*"([^"]+)"/);
+                if (m && m[1] === lastEdited) {
+                    console.log(`[=] 未变更,跳过: ${safeFileName}`);
+                    syncedCount++;
+                    continue;
+                }
+            }
+
             let markdownBlocks;
             try {
                 markdownBlocks = await notionToMarkdown.pageToMarkdown(postData.id);
@@ -99,7 +108,8 @@ async function syncPosts() {
                 postData.properties.Description?.rich_text?.[0]?.plain_text || '',
                 localThumbnailUrl,
                 postData.properties.Date?.date?.start || '',
-                parsePostTags(postData.properties.Tags?.multi_select || [])
+                parsePostTags(postData.properties.Tags?.multi_select || []),
+                lastEdited
             );
 
             const filePath = path.join(postsDir, `${safeFileName}.md`);
@@ -109,9 +119,22 @@ async function syncPosts() {
             console.log(`[+] Created post: ${filePath}`);
         }
 
-        console.log(`[+] 同步统计: 成功写入 ${syncedCount} 篇 | 未发布跳过 ${skippedUnpublished} 篇 | 拉取失败跳过 ${skippedFetch} 篇`);
-        if (syncedCount === 0) {
-            console.error("[!] 0 篇文章被写入,疑似 Notion 字段配置或权限问题。中止同步,防止清空线上内容。");
+        // 删除已取消发布/删除的文章对应的孤儿 md
+        for (const f of fs.readdirSync(postsDir)) {
+            if (f.endsWith('.md')) {
+                const slug = f.slice(0, -3);
+                if (!currentSlugs.has(slug)) {
+                    fs.rmSync(path.join(postsDir, f));
+                    console.log(`[-] 文章已移除/取消发布,删除: ${f}`);
+                }
+            }
+        }
+
+        const remaining = fs.readdirSync(postsDir).filter(f => f.endsWith('.md'));
+        console.log(`[+] 同步统计: 成功 ${syncedCount} | 未发布跳过 ${skippedUnpublished} | 拉取失败 ${skippedFetch} | 目录现有 ${remaining.length} 篇`);
+        // 保护:同步后 content/posts 必须至少有 1 篇 md,否则异常,中止以防清空线上
+        if (remaining.length === 0) {
+            console.error("[!] 同步后 content/posts 无任何文章,疑似异常,中止以防清空线上内容。");
             process.exit(1);
         }
     }
@@ -128,7 +151,8 @@ function parseMarkdownFrontmatter(
     description: string,
     thumbnail: string,
     date: string,
-    tags: Array<string>
+    tags: Array<string>,
+    notionLastEdited: string
 ): string {
     return `---
 title: "${title}"
@@ -136,6 +160,7 @@ description: "${description}"
 thumbnail: "${thumbnail}"
 date: "${date}"
 tags: ${JSON.stringify(tags)}
+notionLastEdited: "${notionLastEdited}"
 ---
 `
 }
@@ -200,6 +225,13 @@ async function downloadImageInner(imageUrl: string, altText: string): Promise<st
         const imageDir = path.join(process.cwd(), 'public/images/posts');
         if (!fs.existsSync(imageDir)) {
             fs.mkdirSync(imageDir, { recursive: true });
+        }
+
+        // 增量复用:基于图片 URL(去掉签名 query)算 hash 命名,相同图片跨次直接复用
+        const imgHash = createHash('sha1').update(imageUrl.split('?')[0]).digest('hex').slice(0, 16);
+        const existing = fs.readdirSync(imageDir).find(f => f.startsWith(imgHash + '.'));
+        if (existing) {
+            return `/images/posts/${existing}`;
         }
 
         // 下载(带重试,打印 HTTP 状态码便于排查)
