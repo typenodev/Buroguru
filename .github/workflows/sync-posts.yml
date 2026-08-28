@@ -43,10 +43,13 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add content/posts public/images/posts
+
+          # 暂存全部改动(脚本生成的 content/images + npm install 可能改的 package-lock.json)
+          # 必须 add -A,否则残留未暂存改动会让 pull --rebase 报 "unstaged changes"
+          git add -A
 
           # 无变化则跳过,避免空提交
-          git diff --quiet && git diff --staged --quiet && echo "无内容变化,跳过提交" && exit 0
+          git diff --cached --quiet && echo "无内容变化,跳过提交" && exit 0
 
           git commit -m "chore: sync posts from notion"
 
