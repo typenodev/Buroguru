@@ -146,8 +146,8 @@ export const defaultConfig: BuroguruConfig = {
 // User's custom configuration
 const config: BuroguruConfig = {
   site: {
-    name: "Buroguru",
-    description: "A modern blog framework that transforms your Notion workspace into a beautiful blog",
+    name: "PhotoBook",
+    description: "Every Page, a Memory. Every Memory, a Story",
     url: "https://buroguru.zudo.cc"
   },
   
@@ -178,11 +178,11 @@ const config: BuroguruConfig = {
   
   homepage: {
     hero: {
-      title: "Buroguru",
-      description: "Documenting blog using Notion as CMS.",
+      title: "PhotoBook",
+      description: "Every Page, a Memory. Every Memory, a Story",
       primaryButton: {
         text: "Get Started",
-        href: "/posts/get-started-en"
+        href: "/posts"
       },
       secondaryButton: {
         text: "What is Buroguru?",
