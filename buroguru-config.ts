@@ -110,13 +110,13 @@ showBuiltWith: true
 }
 const config: BuroguruConfig = {
 site: {
-name: "typenodev 的技术博客",
-description: "用 Notion 作 CMS 记录技术与思考",
+name: "PhotoBook",
+description: "Every Page, a Memory. Every Memory, a Story.",
 url: "https://buroguru.netlify.app"
 },
 author: {
 name: "typenodev",
-bio: "记录技术实践与踩坑笔记。",
+bio: "",
 avatar: "/images/avatar.png",
 social: {
 github: "https://github.com/typenodev"
@@ -134,8 +134,8 @@ showTags: true
 },
 homepage: {
 hero: {
-title: "typenodev 的技术博客",
-description: "用 Notion 作为 CMS 记录技术与思考。",
+title: "PhotoBook",
+description: "Every Page, a Memory. Every Memory, a Story.",
 primaryButton: {
 text: "开始阅读",
 href: "/posts"
