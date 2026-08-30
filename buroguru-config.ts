@@ -75,10 +75,11 @@ notion: "https://notion.so/yourusername"
 }
 },
 appearance: {
-fontFamily: 'serif',
-primaryColor: '222.2 84% 4.9%',
-logo: "/images/logo.png"
-},
+    fontFamily: 'serif',
+    primaryColor: '222.2 84% 4.9%',
+    secondaryColor: '210 40% 96%',
+    logo: '/images/Buroguru.png'
+  },
 blog: {
 postsPerPage: 10,
 showExcerpt: true,
