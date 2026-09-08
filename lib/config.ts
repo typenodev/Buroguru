@@ -10,7 +10,11 @@ function mergeConfig(userConfig: Partial<BuroguruConfig>, defaultConfig: Burogur
       social: { ...defaultConfig.author.social, ...userConfig.author?.social }
     },
     appearance: { ...defaultConfig.appearance, ...userConfig.appearance },
-    blog: { ...defaultConfig.blog, ...userConfig.blog },
+    blog: {
+      ...defaultConfig.blog,
+      ...userConfig.blog,
+      imageLayout: { ...defaultConfig.blog.imageLayout, ...userConfig.blog?.imageLayout },
+    },
     homepage: {
       ...defaultConfig.homepage,
       ...userConfig.homepage,
