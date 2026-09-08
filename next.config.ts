@@ -12,8 +12,6 @@ const nextConfig = {
   // 確保靜態文件正確處理
   trailingSlash: false,
   generateEtags: false,
-  // sharp 仅在服务端用于读取图片尺寸，交给 Node 直接 require，避免打包原生模块
-  serverExternalPackages: ['sharp'],
 }
 
 export default nextConfig;
