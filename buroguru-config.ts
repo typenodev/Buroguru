@@ -30,6 +30,21 @@ postsPerPage: number
 showExcerpt: boolean
 showTags: boolean
 defaultThumbnail?: string
+/** 文章内图片排版方式 */
+imageLayout?: {
+/** gallery=按图片尺寸自动排布的 justified 画廊；two-column=双栏网格；stack=原来的全宽堆叠 */
+mode?: 'gallery' | 'two-column' | 'stack'
+/** justified 画廊的基准行高（桌面端 px，移动端自动缩小） */
+rowHeight?: number
+/** 图片间距 px */
+gap?: number
+/** 图片圆角 px */
+radius?: number
+/** 点击图片是否打开灯箱大图 */
+lightbox?: boolean
+/** 双栏模式是否统一裁剪为 4:3，关闭则保留图片原始比例 */
+uniformRatio?: boolean
+}
 }
 homepage: {
 hero: {
@@ -83,7 +98,15 @@ appearance: {
 blog: {
 postsPerPage: 10,
 showExcerpt: true,
-showTags: true
+showTags: true,
+imageLayout: {
+mode: 'gallery',
+rowHeight: 260,
+gap: 8,
+radius: 8,
+lightbox: true,
+uniformRatio: true
+}
 },
 homepage: {
 hero: {
@@ -131,7 +154,16 @@ primaryColor: '222.2 84% 4.9%'
 blog: {
 postsPerPage: 10,
 showExcerpt: true,
-showTags: true
+showTags: true,
+// 文章内图片排版：mode 可选 'gallery'（按图片尺寸自动排布的画廊）/ 'two-column'（双栏网格）/ 'stack'（原全宽堆叠）
+imageLayout: {
+mode: 'gallery',
+rowHeight: 260,
+gap: 8,
+radius: 8,
+lightbox: true,
+uniformRatio: true
+}
 },
 homepage: {
 hero: {
