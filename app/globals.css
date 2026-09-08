@@ -70,3 +70,18 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* 图片画廊 justified 布局：行高随屏幕自适应（基准值由配置注入 --gallery-row-h-base） */
+.gallery-justified {
+  --gallery-row-h: calc(var(--gallery-row-h-base, 260px) * 0.55);
+}
+@media (min-width: 640px) {
+  .gallery-justified {
+    --gallery-row-h: calc(var(--gallery-row-h-base, 260px) * 0.75);
+  }
+}
+@media (min-width: 1024px) {
+  .gallery-justified {
+    --gallery-row-h: var(--gallery-row-h-base, 260px);
+  }
+}
