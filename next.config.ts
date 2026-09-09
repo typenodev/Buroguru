@@ -22,7 +22,7 @@ const nextConfig = {
       '.next/cache/**',
       // 关键：文章原图走 Netlify Image CDN，不要被 trace 进 server handler
       'public/**',
-      'content/**',
+      // 注意：content/ 不能排除！/posts 是动态渲染，运行时要用 fs 读 content/posts/*.md
     ],
   },
 }
