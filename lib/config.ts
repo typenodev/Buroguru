@@ -1,7 +1,27 @@
 import config, { type BuroguruConfig, defaultConfig } from '../buroguru-config'
 
+// 图片排版配置：兼容 buroguru-config.ts 尚未声明 imageLayout 字段的情况
+type ImageLayoutConfig = {
+  mode?: 'gallery' | 'two-column' | 'stack'
+  rowHeight?: number
+  gap?: number
+  radius?: number
+  lightbox?: boolean
+  uniformRatio?: boolean
+}
+
+function readImageLayout(source: unknown): ImageLayoutConfig | undefined {
+  return (source as { imageLayout?: ImageLayoutConfig } | undefined)?.imageLayout
+}
+
 // Merge user config with default config
 function mergeConfig(userConfig: Partial<BuroguruConfig>, defaultConfig: BuroguruConfig): BuroguruConfig {
+  const blogMerged = {
+    ...defaultConfig.blog,
+    ...userConfig.blog,
+    imageLayout: { ...readImageLayout(defaultConfig.blog), ...readImageLayout(userConfig.blog) },
+  } as BuroguruConfig['blog']
+
   return {
     site: { ...defaultConfig.site, ...userConfig.site },
     author: { 
@@ -10,11 +30,7 @@ function mergeConfig(userConfig: Partial<BuroguruConfig>, defaultConfig: Burogur
       social: { ...defaultConfig.author.social, ...userConfig.author?.social }
     },
     appearance: { ...defaultConfig.appearance, ...userConfig.appearance },
-    blog: {
-      ...defaultConfig.blog,
-      ...userConfig.blog,
-      imageLayout: { ...defaultConfig.blog.imageLayout, ...userConfig.blog?.imageLayout },
-    },
+    blog: blogMerged,
     homepage: {
       ...defaultConfig.homepage,
       ...userConfig.homepage,
