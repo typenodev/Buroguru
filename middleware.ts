@@ -4,6 +4,17 @@ import { verifyAuthCookie, AUTH_COOKIE_NAME } from './lib/auth'
 
 const UNLOCK_PATH = '/unlock'
 
+/**
+ * 站点访问锁开关。
+ * SITE_LOCK = 0 / false / off / no  → 整站放行，不做任何拦截
+ * 未配置，或为其他值              → 上锁（保持原有行为）
+ */
+function isLocked(): boolean {
+  const raw = (process.env.SITE_LOCK ?? '').trim().toLowerCase()
+  if (!raw) return true
+  return !(raw === '0' || raw === 'false' || raw === 'off' || raw === 'no')
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl
 
@@ -17,6 +28,11 @@ export async function middleware(req: NextRequest) {
     pathname === '/robots.txt' ||
     pathname === '/sitemap.xml'
   ) {
+    return NextResponse.next()
+  }
+
+  // 开关关闭时整站放行，不做任何拦截
+  if (!isLocked()) {
     return NextResponse.next()
   }
 
