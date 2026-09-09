@@ -45,6 +45,15 @@ lightbox?: boolean
 /** 双栏模式是否统一裁剪为 4:3，关闭则保留图片原始比例 */
 uniformRatio?: boolean
 }
+/** 文章底部「相关文章」推荐 */
+relatedPosts?: {
+/** 是否显示相关文章 */
+enabled?: boolean
+/** 推荐数量 */
+count?: number
+/** 区块标题 */
+title?: string
+}
 }
 homepage: {
 hero: {
@@ -106,6 +115,11 @@ gap: 8,
 radius: 8,
 lightbox: true,
 uniformRatio: true
+},
+relatedPosts: {
+enabled: true,
+count: 3,
+title: "Related Posts"
 }
 },
 homepage: {
@@ -163,6 +177,12 @@ gap: 8,
 radius: 8,
 lightbox: true,
 uniformRatio: true
+},
+// 文章底部「相关文章」：按标签重合度推荐，标签不足时自动用最新文章补齐
+relatedPosts: {
+enabled: true,
+count: 3,
+title: "相关文章"
 }
 },
 homepage: {
