@@ -152,6 +152,17 @@ export default async function PostPage({ params }: PostPageProps) {
     ...((blog as unknown as { imageLayout?: ImageLayoutConfig }).imageLayout ?? {}),
   }
 
+  // 相关文章：按标签重合度推荐，标签匹配不足时用最新文章补齐
+  const relatedConfig = (blog as unknown as {
+    relatedPosts?: { enabled?: boolean; count?: number; title?: string }
+  }).relatedPosts
+  const relatedEnabled = relatedConfig?.enabled ?? true
+  const relatedCount = relatedConfig?.count ?? 3
+  const relatedTitle = relatedConfig?.title ?? 'Related Posts'
+  const relatedPosts = relatedEnabled
+    ? PostsManager.getRelatedPosts(post.id, post.tags, relatedCount)
+    : []
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -237,20 +248,46 @@ export default async function PostPage({ params }: PostPageProps) {
           )}
         </article>
 
-        {/* Related Posts Navigation */}
-        <div className="mt-16 pt-8 border-t">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-sm font-serif text-muted-foreground mb-2">More posts</p>
-              <Link 
-                href="/posts" 
-                className="text-primary hover:underline font-serif decoration-2 underline-offset-2"
+        {/* Related Posts */}
+        {relatedPosts.length > 0 && (
+          <div className="mt-16 pt-8 border-t">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl md:text-2xl font-serif">{relatedTitle}</h2>
+              <Link
+                href="/posts"
+                className="text-sm font-serif text-muted-foreground hover:text-primary transition-colors"
               >
                 View all posts →
               </Link>
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {relatedPosts.map((related) => (
+                <Link
+                  key={related.id}
+                  href={`/posts/${related.id}`}
+                  className="group block"
+                >
+                  {related.thumbnail && (
+                    <div className="relative w-full mb-3 overflow-hidden rounded-lg aspect-[2/1] bg-secondary">
+                      <Image
+                        src={related.thumbnail}
+                        alt={related.title}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                  )}
+                  <h3 className="text-base font-serif mb-1 line-clamp-2 group-hover:text-primary transition-colors">
+                    {related.title}
+                  </h3>
+                  <time className="text-xs font-serif text-muted-foreground">
+                    {formatDate(related.date)}
+                  </time>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
       <Footer />
       <ProfileCard />
