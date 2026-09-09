@@ -6,8 +6,8 @@
 [functions]
   # esbuild 打包更小更快，论坛里同样报错的站点靠这行解决
   node_bundler = "esbuild"
-  # 双保险排除原生二进制（Next 的 outputFileTracingExcludes 之外，Netlify 打包层再排除一次）
-  excluded_files = { "node_modules/sharp/**/*" = true, "node_modules/@img/**/*" = true }
+  # 双保险排除原生二进制 + 文章原图（它们走 Netlify Image CDN，不该进函数包）
+  excluded_files = { "node_modules/sharp/**/*" = true, "node_modules/@img/**/*" = true, "public/images/**/*" = true, ".next/cache/**/*" = true }
 
 # 让 Netlify 的 Next.js 适配器接管（路由/SSG/middleware 密码保护/图片 CDN 都靠它）
 [[plugins]]
