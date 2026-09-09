@@ -77,6 +77,38 @@ export class PostsManager {
     })).sort((a, b) => b.count - a.count)
   }
 
+  /**
+   * 相关文章：优先按标签重合度排序，重合数相同时取更新的文章；
+   * 标签匹配不足时用最新文章补齐，保证区块永不为空。
+   */
+  static getRelatedPosts(currentId: string, tags: string[], limit = 3): Post[] {
+    const allPosts = this.getAllPosts().filter(post => post.id !== currentId)
+    const currentTags = (tags || []).map(tag => tag.toLowerCase())
+
+    const scored = allPosts.map(post => ({
+      post,
+      overlap: post.tags.filter(tag => currentTags.includes(tag.toLowerCase())).length,
+    }))
+
+    const matched = scored
+      .filter(item => item.overlap > 0)
+      .sort((a, b) =>
+        b.overlap - a.overlap ||
+        new Date(b.post.date).getTime() - new Date(a.post.date).getTime()
+      )
+      .slice(0, limit)
+      .map(item => item.post)
+
+    if (matched.length >= limit) return matched
+
+    const pickedIds = new Set(matched.map(post => post.id))
+    const fallback = allPosts
+      .filter(post => !pickedIds.has(post.id))
+      .slice(0, limit - matched.length)
+
+    return [...matched, ...fallback]
+  }
+
   static getPostsByMonth(): { [key: string]: Post[] } {
     const posts = this.getAllPosts()
     return posts.reduce((acc, post) => {
