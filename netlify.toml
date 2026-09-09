@@ -1,5 +1,14 @@
 [build]
   command = "npm run build"
+  # 把静态预渲染页面移出函数包，直击函数过大的主因
+  environment = { EXPERIMENTAL_MOVE_STATIC_PAGES = "true" }
 
+[functions]
+  # esbuild 打包更小更快，论坛里同样报错的站点靠这行解决
+  node_bundler = "esbuild"
+  # 双保险排除原生二进制（Next 的 outputFileTracingExcludes 之外，Netlify 打包层再排除一次）
+  excluded_files = "node_modules/sharp/**/* node_modules/@img/**/*"
+
+# 让 Netlify 的 Next.js 适配器接管（路由/SSG/middleware 密码保护/图片 CDN 都靠它）
 [[plugins]]
   package = "@netlify/plugin-nextjs"
