@@ -12,6 +12,19 @@ const nextConfig = {
   // 確保靜態文件正確處理
   trailingSlash: false,
   generateEtags: false,
+  // 瘦身：不要把 sharp / libvips 等原生二进制打包进 server handler
+  // （Netlify 图片走 /.netlify/images CDN，不需要 Next 自带的 sharp 优化器）
+  outputFileTracingExcludes: {
+    '*': [
+      'node_modules/sharp/**',
+      'node_modules/@img/**',
+      'node_modules/next/dist/compiled/@ampproject/**',
+      '.next/cache/**',
+      // 关键：文章原图走 Netlify Image CDN，不要被 trace 进 server handler
+      'public/**',
+      'content/**',
+    ],
+  },
 }
 
 export default nextConfig;
