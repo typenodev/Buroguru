@@ -152,7 +152,7 @@ export default async function PostPage({ params }: PostPageProps) {
     ...((blog as unknown as { imageLayout?: ImageLayoutConfig }).imageLayout ?? {}),
   }
 
-  // 相关文章：按标签重合度推荐，标签匹配不足时用最新文章补齐
+  // 相关文章：先取标签命中的文章，再按时间接近排序；命中不足时用时间最接近的文章补齐
   const relatedConfig = (blog as unknown as {
     relatedPosts?: { enabled?: boolean; count?: number; title?: string }
   }).relatedPosts
@@ -160,7 +160,7 @@ export default async function PostPage({ params }: PostPageProps) {
   const relatedCount = relatedConfig?.count ?? 3
   const relatedTitle = relatedConfig?.title ?? 'Related Posts'
   const relatedPosts = relatedEnabled
-    ? PostsManager.getRelatedPosts(post.id, post.tags, relatedCount)
+    ? PostsManager.getRelatedPosts(post.id, post.tags, relatedCount, post.date)
     : []
 
   return (
