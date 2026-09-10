@@ -78,35 +78,55 @@ export class PostsManager {
   }
 
   /**
-   * 相关文章：优先按标签重合度排序，重合数相同时取更新的文章；
-   * 标签匹配不足时用最新文章补齐，保证区块永不为空。
+   * 相关文章：先按标签命中筛选，再按「时间接近」排序；
+   * 标签命中的文章不足时，用时间最接近的文章补足，保证区块永不为空。
+   *
+   * 排序规则（同一批次内依次比较）：
+   * 1. |候选文章时间 − 当前文章时间| 越小越靠前；
+   * 2. 时间差相同时，标签重合数多的靠前；
+   * 3. 仍相同时，日期较新的靠前。
    */
-  static getRelatedPosts(currentId: string, tags: string[], limit = 3): Post[] {
-    const allPosts = this.getAllPosts().filter(post => post.id !== currentId)
-    const currentTags = (tags || []).map(tag => tag.toLowerCase())
+  static getRelatedPosts(currentId: string, tags: string[], limit = 3, currentDate?: string): Post[] {
+    const allPosts = this.getAllPosts()
+    const currentTags = (tags || []).map(tag => tag.toLowerCase()).filter(Boolean)
 
-    const scored = allPosts.map(post => ({
-      post,
-      overlap: post.tags.filter(tag => currentTags.includes(tag.toLowerCase())).length,
-    }))
+    // 基准时间：优先使用传入的当前文章日期，回退为从列表中查找
+    const baseDateRaw = currentDate ?? allPosts.find(post => post.id === currentId)?.date
+    const baseTime = baseDateRaw ? new Date(baseDateRaw).getTime() : NaN
 
-    const matched = scored
-      .filter(item => item.overlap > 0)
-      .sort((a, b) =>
-        b.overlap - a.overlap ||
-        new Date(b.post.date).getTime() - new Date(a.post.date).getTime()
-      )
+    const timeDistance = (post: Post): number => {
+      const postTime = new Date(post.date).getTime()
+      if (!Number.isFinite(baseTime) || !Number.isFinite(postTime)) return Number.POSITIVE_INFINITY
+      return Math.abs(postTime - baseTime)
+    }
+
+    const overlapCount = (post: Post): number =>
+      post.tags.filter(tag => currentTags.includes(tag.toLowerCase())).length
+
+    // 时间接近优先 → 标签重合数 → 日期较新
+    const byTimeProximity = (a: Post, b: Post): number =>
+      timeDistance(a) - timeDistance(b) ||
+      overlapCount(b) - overlapCount(a) ||
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+
+    const pool = allPosts.filter(post => post.id !== currentId)
+
+    // 1. 标签命中的文章：按时间接近排序后取前 limit 篇
+    const tagged = pool
+      .filter(post => overlapCount(post) > 0)
+      .sort(byTimeProximity)
       .slice(0, limit)
-      .map(item => item.post)
 
-    if (matched.length >= limit) return matched
+    if (tagged.length >= limit) return tagged
 
-    const pickedIds = new Set(matched.map(post => post.id))
-    const fallback = allPosts
+    // 2. 标签命中不足时，用剩余文章中时间最接近的补足
+    const pickedIds = new Set(tagged.map(post => post.id))
+    const fallback = pool
       .filter(post => !pickedIds.has(post.id))
-      .slice(0, limit - matched.length)
+      .sort(byTimeProximity)
+      .slice(0, limit - tagged.length)
 
-    return [...matched, ...fallback]
+    return [...tagged, ...fallback]
   }
 
   static getPostsByMonth(): { [key: string]: Post[] } {
