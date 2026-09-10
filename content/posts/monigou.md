@@ -3,8 +3,8 @@ title: "牟尼沟"
 description: ""
 thumbnail: "/images/posts/ec647b4c9b6d3e09.jpg"
 date: "2022-08-05"
-tags: []
-notionLastEdited: "2026-09-08T08:37:00.000Z"
+tags: ["川西"]
+notionLastEdited: "2026-09-10T02:36:00.000Z"
 ---
 
 ![IMG_20220805_185648.heic](/images/posts/a2d0084e2970bbb5.jpg)

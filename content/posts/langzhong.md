@@ -3,8 +3,8 @@ title: "2026阆中之行"
 description: ""
 thumbnail: "/images/posts/1505f5acba4eb4ca.jpg"
 date: "2026-01-03"
-tags: []
-notionLastEdited: "2026-08-28T02:39:00.000Z"
+tags: ["四川"]
+notionLastEdited: "2026-09-10T02:36:00.000Z"
 ---
 
 ![1000003471.jpg](/images/posts/05a3041950e06736.jpg)

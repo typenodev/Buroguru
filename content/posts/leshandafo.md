@@ -3,8 +3,8 @@ title: "嘉州礼佛小记"
 description: ""
 thumbnail: "/images/posts/3c7aad5860f04463.jpg"
 date: "2026-04-04"
-tags: []
-notionLastEdited: "2026-09-08T08:35:00.000Z"
+tags: ["四川"]
+notionLastEdited: "2026-09-10T02:35:00.000Z"
 ---
 
 ![1000004872.heic](/images/posts/fee3cc416833050a.jpg)

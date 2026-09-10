@@ -3,8 +3,8 @@ title: "松潘"
 description: ""
 thumbnail: "/images/posts/317ced954384cdbf.jpg"
 date: "2022-08-05"
-tags: []
-notionLastEdited: "2026-09-08T08:37:00.000Z"
+tags: ["川西"]
+notionLastEdited: "2026-09-10T02:36:00.000Z"
 ---
 
 ![IMG_20220805_093726.heic](/images/posts/abaa900795a8fe5a.jpg)

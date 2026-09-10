@@ -3,8 +3,8 @@ title: "青海@西宁"
 description: ""
 thumbnail: "/images/posts/f735ce5431f190eb.jpg"
 date: "2026-07-27"
-tags: []
-notionLastEdited: "2026-08-28T02:40:00.000Z"
+tags: ["青海"]
+notionLastEdited: "2026-09-10T02:35:00.000Z"
 ---
 
 ![1000007027.jpg](/images/posts/4564f940265b83ee.jpg)

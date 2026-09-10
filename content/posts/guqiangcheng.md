@@ -3,8 +3,8 @@ title: "中国古羌城"
 description: ""
 thumbnail: "/images/posts/1a1b37c3838860f1.jpg"
 date: "2022-08-07"
-tags: []
-notionLastEdited: "2026-09-08T08:36:00.000Z"
+tags: ["川西"]
+notionLastEdited: "2026-09-10T02:36:00.000Z"
 ---
 
 ![IMG_20220807_102059.heic](/images/posts/301467d786889457.jpg)

@@ -3,8 +3,8 @@ title: "花湖"
 description: ""
 thumbnail: "/images/posts/a9068f0a04e39773.jpg"
 date: "2022-08-03"
-tags: []
-notionLastEdited: "2026-08-28T08:24:00.000Z"
+tags: ["川西"]
+notionLastEdited: "2026-09-10T02:36:00.000Z"
 ---
 
 ![IMG_20220803_142110.heic](/images/posts/abf6f9f30b7e6577.jpg)

@@ -3,8 +3,8 @@ title: "月亮湾·红原"
 description: ""
 thumbnail: "/images/posts/7b5e2a3d6f2af9e3.jpg"
 date: "2022-08-04"
-tags: []
-notionLastEdited: "2026-09-08T08:36:00.000Z"
+tags: ["川西"]
+notionLastEdited: "2026-09-10T02:36:00.000Z"
 ---
 
 ![IMG_20220804_145224.heic](/images/posts/4fa2611d7cce7a88.jpg)

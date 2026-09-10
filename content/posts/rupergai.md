@@ -3,8 +3,8 @@ title: "若尔盖大草原"
 description: ""
 thumbnail: "/images/posts/0fd4a4a7cca6d3dc.jpg"
 date: "2022-08-03"
-tags: []
-notionLastEdited: "2026-08-28T02:40:00.000Z"
+tags: ["川西"]
+notionLastEdited: "2026-09-10T02:36:00.000Z"
 ---
 
 ![IMG_20220803_090914.heic](/images/posts/daaffaa41cbd9e81.jpg)

@@ -3,8 +3,8 @@ title: "2026.2.8绵阳"
 description: ""
 thumbnail: "/images/posts/4c87e6010b8e7433.jpg"
 date: "2026-02-08"
-tags: []
-notionLastEdited: "2026-09-08T08:35:00.000Z"
+tags: ["绵阳"]
+notionLastEdited: "2026-09-10T02:36:00.000Z"
 ---
 
 ![1000003822.jpg](/images/posts/ca1c2ec350fae42a.jpg)

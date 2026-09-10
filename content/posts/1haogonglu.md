@@ -3,8 +3,8 @@ title: "年画村一号公路"
 description: ""
 thumbnail: "/images/posts/89f43e848776358f.jpg"
 date: "2026-03-29"
-tags: []
-notionLastEdited: "2026-09-08T08:35:00.000Z"
+tags: ["德阳"]
+notionLastEdited: "2026-09-10T02:35:00.000Z"
 ---
 
 ![1000004787.heic](/images/posts/f67d36ab5233fb78.jpg)

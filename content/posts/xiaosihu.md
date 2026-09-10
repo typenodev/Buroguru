@@ -3,8 +3,8 @@ title: "兰州小西湖/水车园"
 description: ""
 thumbnail: "/images/posts/f2a22b4a5c545961.jpg"
 date: "2026-07-30"
-tags: []
-notionLastEdited: "2026-09-08T08:36:00.000Z"
+tags: ["兰州"]
+notionLastEdited: "2026-09-10T02:34:00.000Z"
 ---
 
 ![1000007201.heic](/images/posts/27448575094abdc2.jpg)
