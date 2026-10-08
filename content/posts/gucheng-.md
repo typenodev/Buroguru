@@ -1,10 +1,10 @@
 ---
 title: "襄阳市谷城县汉江湿地公园"
 description: ""
-thumbnail: ""
+thumbnail: "/images/posts/bc1c4050a767332d.jpg"
 date: "2026-10-06"
 tags: []
-notionLastEdited: "2026-10-08T02:53:00.000Z"
+notionLastEdited: "2026-10-08T06:42:00.000Z"
 ---
 
 ![1000007912.jpg](/images/posts/350e39efed4b7629.jpg)
